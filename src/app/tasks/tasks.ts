@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '../services/task.service';
@@ -17,6 +17,7 @@ export class Tasks implements OnInit {
   
   private taskService = inject(TaskService);
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit() {
     this.loadTasks();
@@ -26,6 +27,7 @@ export class Tasks implements OnInit {
     this.taskService.getTasks().subscribe({
       next: (data) => {
         this.tasks = data;
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error loading tasks', err)
     });
@@ -38,6 +40,7 @@ export class Tasks implements OnInit {
       next: (task) => {
         this.tasks.push(task);
         this.newTaskTitle = '';
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error creating task', err)
     });
@@ -45,9 +48,11 @@ export class Tasks implements OnInit {
 
   toggleTask(task: any) {
     this.taskService.updateTask(task.id, task.isCompleted).subscribe({
+      next: () => this.cdr.detectChanges(),
       error: (err) => {
         console.error('Error updating task', err);
         task.isCompleted = !task.isCompleted; // Revert on error
+        this.cdr.detectChanges();
       }
     });
   }
@@ -56,6 +61,7 @@ export class Tasks implements OnInit {
     this.taskService.deleteTask(id).subscribe({
       next: () => {
         this.tasks = this.tasks.filter(t => t.id !== id);
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Error deleting task', err)
     });
