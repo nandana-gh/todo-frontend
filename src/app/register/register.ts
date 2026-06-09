@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -19,6 +19,7 @@ export class Register {
 
   private authService = inject(AuthService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   onSubmit() {
     if (this.password !== this.confirmPassword) {
@@ -37,6 +38,7 @@ export class Register {
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Registration failed. Try a different username.';
+        this.cdr.detectChanges();
       }
     });
   }
