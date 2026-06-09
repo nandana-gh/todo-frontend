@@ -17,17 +17,14 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing npm dependencies...'
-                // Use 'bat' if running directly on a Windows Jenkins agent without WSL/Bash
-                // bat 'npm ci'
-                sh 'npm ci'
+                bat 'npm ci'
             }
         }
 
         stage('Build Angular App') {
             steps {
                 echo 'Building Angular application for production...'
-                // bat 'npx ng build --configuration production'
-                sh 'npx ng build --configuration production'
+                bat 'npx ng build --configuration production'
             }
         }
 
