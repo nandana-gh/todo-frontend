@@ -14,6 +14,8 @@ import { AuthService } from '../services/auth.service';
 export class Tasks implements OnInit {
   tasks: any[] = [];
   newTaskTitle = '';
+  currentPage = 1;
+  pageSize = 6;
   
   private taskService = inject(TaskService);
   private authService = inject(AuthService);
@@ -21,6 +23,29 @@ export class Tasks implements OnInit {
 
   ngOnInit() {
     this.loadTasks();
+  }
+
+  get paginatedTasks() {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.tasks.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  get totalPages() {
+    return Math.max(1, Math.ceil(this.tasks.length / this.pageSize));
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.cdr.detectChanges();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.cdr.detectChanges();
+    }
   }
 
   loadTasks() {
@@ -38,7 +63,8 @@ export class Tasks implements OnInit {
     
     this.taskService.createTask(this.newTaskTitle).subscribe({
       next: (task) => {
-        this.tasks.push(task);
+        this.tasks.unshift(task);
+        this.currentPage = 1;
         this.newTaskTitle = '';
         this.cdr.detectChanges();
       },
@@ -61,6 +87,9 @@ export class Tasks implements OnInit {
     this.taskService.deleteTask(id).subscribe({
       next: () => {
         this.tasks = this.tasks.filter(t => t.id !== id);
+        if (this.currentPage > this.totalPages) {
+          this.currentPage = this.totalPages;
+        }
         this.cdr.detectChanges();
       },
       error: (err) => console.error('Error deleting task', err)
