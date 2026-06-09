@@ -15,7 +15,7 @@
           <h2 class="mb-4 text-center">My Tasks</h2>
           
           <div class="d-flex flex-column flex-sm-row gap-2 mb-4">
-            <input type="text" class="form-control form-control-lg w-100" placeholder="What do you need to do?" 
+            <input type="text" class="form-control form-control-lg w-100" placeholder="." 
                    [(ngModel)]="newTaskTitle" name="newTaskTitle" (keyup.enter)="addTask()">
             <button class="btn btn-primary btn-lg px-4 flex-shrink-0" type="button" (click)="addTask()" [disabled]="!newTaskTitle.trim()">
               Add Task
