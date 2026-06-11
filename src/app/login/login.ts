@@ -18,17 +18,17 @@ export class Login {
 
   private authService = inject(AuthService);
   private router = inject(Router);
-  private zone = inject(NgZone);
+  private ngZone = inject(NgZone);
 
   onSubmit() {
     this.authService.login({ username: this.username, password: this.password }).subscribe({
       next: () => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.router.navigate(['/tasks']);
         });
       },
       error: (err) => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.errorMessage = err.error?.message || 'Login failed. Please check your credentials.';
         });
       }

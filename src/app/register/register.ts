@@ -19,7 +19,7 @@ export class Register {
 
   private authService = inject(AuthService);
   private router = inject(Router);
-  private zone = inject(NgZone);
+  private ngZone = inject(NgZone);
 
   onSubmit() {
     if (this.password !== this.confirmPassword) {
@@ -34,12 +34,12 @@ export class Register {
 
     this.authService.register({ username: this.username, password: this.password, confirmPassword: this.confirmPassword }).subscribe({
       next: () => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.router.navigate(['/login']);
         });
       },
       error: (err) => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.errorMessage = err.error?.message || 'Registration failed. Try a different username.';
         });
       }

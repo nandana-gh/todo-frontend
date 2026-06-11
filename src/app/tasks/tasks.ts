@@ -19,7 +19,7 @@ export class Tasks implements OnInit {
   
   private taskService = inject(TaskService);
   private authService = inject(AuthService);
-  private zone = inject(NgZone);
+  private ngZone = inject(NgZone);
 
   ngOnInit() {
     this.loadTasks();
@@ -36,24 +36,20 @@ export class Tasks implements OnInit {
 
   nextPage() {
     if (this.currentPage < this.totalPages) {
-      this.zone.run(() => {
-        this.currentPage++;
-      });
+      this.currentPage++;
     }
   }
 
   prevPage() {
     if (this.currentPage > 1) {
-      this.zone.run(() => {
-        this.currentPage--;
-      });
+      this.currentPage--;
     }
   }
 
   loadTasks() {
     this.taskService.getTasks().subscribe({
       next: (data) => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.tasks = data;
         });
       },
@@ -66,7 +62,7 @@ export class Tasks implements OnInit {
     
     this.taskService.createTask(this.newTaskTitle).subscribe({
       next: (task) => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.tasks.unshift(task);
           this.currentPage = 1;
           this.newTaskTitle = '';
@@ -80,8 +76,8 @@ export class Tasks implements OnInit {
     this.taskService.updateTask(task.id, task.isCompleted).subscribe({
       next: () => {},
       error: (err) => {
-        console.error('Error updating task', err);
-        this.zone.run(() => {
+        this.ngZone.run(() => {
+          console.error('Error updating task', err);
           task.isCompleted = !task.isCompleted; // Revert on error
         });
       }
@@ -91,7 +87,7 @@ export class Tasks implements OnInit {
   deleteTask(id: string) {
     this.taskService.deleteTask(id).subscribe({
       next: () => {
-        this.zone.run(() => {
+        this.ngZone.run(() => {
           this.tasks = this.tasks.filter(t => t.id !== id);
           if (this.currentPage > this.totalPages) {
             this.currentPage = this.totalPages;
