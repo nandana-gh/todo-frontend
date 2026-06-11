@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -18,16 +18,19 @@ export class Login {
 
   private authService = inject(AuthService);
   private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef);
+  private zone = inject(NgZone);
 
   onSubmit() {
     this.authService.login({ username: this.username, password: this.password }).subscribe({
       next: () => {
-        this.router.navigate(['/tasks']);
+        this.zone.run(() => {
+          this.router.navigate(['/tasks']);
+        });
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Login failed. Please check your credentials.';
-        this.cdr.detectChanges();
+        this.zone.run(() => {
+          this.errorMessage = err.error?.message || 'Login failed. Please check your credentials.';
+        });
       }
     });
   }
