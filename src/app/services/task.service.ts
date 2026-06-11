@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class TaskService {
-  private apiUrl = 'http://localhost:5268/api/Tasks';
+  private apiUrl = '/api/Tasks';
   private http = inject(HttpClient);
 
   getTasks(): Observable<any[]> {
