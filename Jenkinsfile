@@ -2,64 +2,57 @@ pipeline {
     agent any
 
     environment {
-        // Defines the Docker image name
-        IMAGE_NAME = 'todo-frontend'
+        ACR     = 'todoacr'
+        RG      = 'todo-rg'
+        AKS     = 'todo-aks'
+        LOCATION = 'southindia'
+        IMAGE   = 'todo-frontend'
+        AZ_CLIENT_ID     = credentials('azure-client-id')
+        AZ_CLIENT_SECRET = credentials('azure-client-secret')
+        AZ_TENANT_ID     = credentials('azure-tenant-id')
     }
 
     stages {
         stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Build image') {
             steps {
-                // Checkout the code from the Git repository
-                checkout scm
+                bat 'docker build --platform linux/amd64 -t %ACR%.azurecr.io/%IMAGE%:%BUILD_NUMBER% -t %ACR%.azurecr.io/%IMAGE%:latest .'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Login to Azure') {
             steps {
-                echo 'Installing npm dependencies...'
-                bat 'npm ci'
+                bat 'az login --service-principal -u %AZ_CLIENT_ID% -p %AZ_CLIENT_SECRET% --tenant %AZ_TENANT_ID%'
+                bat 'az group create -n %RG% -l %LOCATION%'
+                bat 'az acr create -n %ACR% -g %RG% --sku Basic'
+                bat 'az acr login -n %ACR%'
             }
         }
 
-        stage('Build Angular App') {
+        stage('Push to ACR') {
             steps {
-                echo 'Building Angular application for production...'
-                bat 'npx ng build --configuration production'
+                bat 'docker push %ACR%.azurecr.io/%IMAGE%:%BUILD_NUMBER%'
+                bat 'docker push %ACR%.azurecr.io/%IMAGE%:latest'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Deploy to AKS') {
             steps {
-                echo 'Building Docker image...'
-                bat "docker build -t ${IMAGE_NAME}:${env.BUILD_ID} ."
+                bat 'az aks get-credentials -n %AKS% -g %RG% --overwrite-existing'
+                powershell '(Get-Content k8s/frontend.yaml) -replace "<ACR_NAME>", $env:ACR | Set-Content $env:TEMP\\frontend.yaml'
+                bat 'kubectl apply -f %TEMP%\\frontend.yaml'
+                bat 'kubectl set image deployment/todo-frontend todo-frontend=%ACR%.azurecr.io/%IMAGE%:%BUILD_NUMBER%'
+                bat 'kubectl rollout status deployment/todo-frontend --timeout=120s'
             }
         }
-
-        // Optional: Add a stage to push to a Docker Registry (like Docker Hub or AWS ECR)
-        /*
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials-id') {
-                        def customImage = docker.image("${IMAGE_NAME}:${env.BUILD_ID}")
-                        customImage.push()
-                        customImage.push('latest')
-                    }
-                }
-            }
-        }
-        */
     }
 
     post {
-        always {
-            echo 'Pipeline finished!'
-        }
-        success {
-            echo 'Build succeeded!'
-        }
-        failure {
-            echo 'Build failed. Please check the logs.'
-        }
+        success { echo "todo-frontend ${BUILD_NUMBER} deployed to AKS." }
+        failure { echo 'todo-frontend pipeline failed.' }
+        always  { bat 'az logout || exit 0' }
     }
 }
