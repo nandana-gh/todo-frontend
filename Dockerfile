@@ -1,5 +1,5 @@
 # Stage 1: Build the Angular application
-FROM node:20 AS build
+FROM node:22 AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm config set strict-ssl false
