@@ -2,6 +2,7 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
+RUN npm config set strict-ssl false
 RUN npm install
 COPY . .
 RUN npx ng build --configuration production
